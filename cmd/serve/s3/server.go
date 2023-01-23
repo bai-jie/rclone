@@ -3,6 +3,7 @@ package s3
 
 import (
 	"context"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"math/rand"
 	"net/http"
 
@@ -10,13 +11,15 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/hash"
-	"github.com/rclone/rclone/lib/http/auth"
 	"github.com/rclone/rclone/vfs"
 	"github.com/rclone/rclone/vfs/vfsflags"
 )
 
 // Options contains options for the http Server
 type Options struct {
+	Auth           libhttp.AuthConfig
+	HTTP           libhttp.Config
+
 	//TODO add more options
 	pathBucketMode bool
 	hashName       string
@@ -60,9 +63,5 @@ func newServer(ctx context.Context, f fs.Fs, opt *Options) *Server {
 
 // Bind register the handler to http.Router
 func (w *Server) Bind(router chi.Router) {
-	if m := auth.Auth(auth.Opt); m != nil {
-		router.Use(m)
-	}
-
 	router.Handle("/*", w.handler)
 }

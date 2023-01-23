@@ -15,13 +15,12 @@ import (
 	"time"
 
 	_ "github.com/rclone/rclone/backend/local"
-	"github.com/rclone/rclone/cmd/serve/httplib/httpflags"
 	"github.com/rclone/rclone/cmd/serve/servetest"
 	"github.com/rclone/rclone/fs"
 	"github.com/rclone/rclone/fs/config/configmap"
 	"github.com/rclone/rclone/fs/hash"
 	"github.com/rclone/rclone/fstest"
-	httplib "github.com/rclone/rclone/lib/http"
+	libhttp "github.com/rclone/rclone/lib/http"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -35,7 +34,8 @@ const (
 func TestS3(t *testing.T) {
 	// Configure and start the server
 	start := func(f fs.Fs) (configmap.Simple, func()) {
-		httpflags.Opt.ListenAddr = endpoint
+		httpOpt := libhttp.DefaultCfg()
+		httpOpt.ListenAddr = []string{endpoint}
 		keyid := RandString(16)
 		keysec := RandString(16)
 		serveropt := &Options{
@@ -45,13 +45,18 @@ func TestS3(t *testing.T) {
 			authPair:       []string{fmt.Sprintf("%s,%s", keyid, keysec)},
 		}
 
-		w := newServer(context.Background(), f, serveropt)
-		router, err := httplib.Router()
+		ctx := context.Background()
+		w := newServer(ctx, f, serveropt)
+		server, err := libhttp.NewServer(ctx,
+			libhttp.WithConfig(httpOpt),
+		)
 		assert.NoError(t, err)
+		server.Serve()
+		router := server.Router()
 
 		w.Bind(router)
 		assert.NoError(t, err)
-		testURL := httplib.URL()
+		testURL := server.URLs()[0]
 
 		// Config for the backend we'll use to connect to the server
 		config := configmap.Simple{

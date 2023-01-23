@@ -1,6 +1,7 @@
 ---
 title: "FTP"
 description: "Rclone docs for FTP backend"
+versionIntroduced: "v1.37"
 ---
 
 # {{< icon "fa fa-file" >}} FTP
@@ -216,7 +217,7 @@ Use Implicit FTPS (FTP over TLS).
 When using implicit FTP over TLS the client connects using TLS
 right from the start which breaks compatibility with
 non-TLS-aware servers. This is usually served over port 990 rather
-than port 21. Cannot be used in combination with explicit FTP.
+than port 21. Cannot be used in combination with explicit FTPS.
 
 Properties:
 
@@ -231,7 +232,7 @@ Use Explicit FTPS (FTP over TLS).
 
 When using explicit FTP over TLS the client explicitly requests
 security from the server in order to upgrade a plain text connection
-to an encrypted one. Cannot be used in combination with implicit FTP.
+to an encrypted one. Cannot be used in combination with implicit FTPS.
 
 Properties:
 
@@ -247,6 +248,20 @@ Here are the Advanced options specific to ftp (FTP).
 #### --ftp-concurrency
 
 Maximum number of FTP simultaneous connections, 0 for unlimited.
+
+Note that setting this is very likely to cause deadlocks so it should
+be used with care.
+
+If you are doing a sync or copy then make sure concurrency is one more
+than the sum of `--transfers` and `--checkers`.
+
+If you use `--check-first` then it just needs to be one more than the
+maximum of `--checkers` and `--transfers`.
+
+So for `concurrency 3` you'd use `--checkers 2 --transfers 2
+--check-first` or `--checkers 1 --transfers 1`.
+
+
 
 Properties:
 
